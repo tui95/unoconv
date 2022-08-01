@@ -840,8 +840,8 @@ class Convertor:
             die(251, "Unable to connect or start own listener. Aborting.")
 
         # And some more LibreOffice magic
-        unosvcmgr = unocontext.ServiceManager
-        self.desktop = unosvcmgr.createInstanceWithContext("com.sun.star.frame.Desktop", unocontext)
+        self.unosvcmgr = unocontext.ServiceManager
+        self.desktop = self.unosvcmgr.createInstanceWithContext("com.sun.star.frame.Desktop", unocontext)
         self.cwd = unohelper.systemPathToFileUrl(os.getcwd())
 
         # List all filters
@@ -985,7 +985,7 @@ class Convertor:
             phase = "import"
 
             # Load inputfile.
-            inputprops = UnoProps(Hidden=True, ReadOnly=True, UpdateDocMode=op.updateDocMode)
+            inputprops = UnoProps(Hidden=True, UpdateDocMode=op.updateDocMode)
 
             if op.password:
                 inputprops += UnoProps(Password=op.password)
@@ -1066,6 +1066,11 @@ class Convertor:
                 except UnoException:
                     error("unoconv: failed to replace variable '%s' with value '%s' in the document." % (f, op.fields[f]))
                     pass
+
+            frame = document.CurrentController.Frame
+            dispatcher = self.unosvcmgr.createInstanceWithContext("com.sun.star.frame.DispatchHelper", self.context)
+            dispatcher.executeDispatch(frame, ".uno:GoToCell", "", 0, UnoProps(ToPoint="$A$2:$GG$1000"))
+            dispatcher.executeDispatch(frame, ".uno:SetOptimalRowHeight", "", 0, UnoProps(aExtraHeight=0))
 
             # Add/Replace metadata
             phase = "replace-metadata"
